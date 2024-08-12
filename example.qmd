@@ -1,0 +1,113 @@
+---
+title: "Custom-callouts Example"
+filters:
+  - custom-callouts
+
+callout_scss: this-document.scss
+# theme: this-document.scss
+
+custom_callouts:
+  - name: objective
+    icon: clarity:bullseye-line
+    heading: "Objective:"
+    attr:
+      font-size: 1.5em
+    color: green
+  - name: hint
+    heading: (hint...)
+    icon: bi:hand-index-thumb
+    attr:
+      flip: vertical
+    collapse: true
+    left_color: '#afcfff'
+    color: "gray"
+  - name: video
+    icon: mdi:video-vintage
+    collapse: true
+    heading: "Video"
+    color: orange
+  - name: defaults
+    heading: "Default Callout"
+  - name: test
+    heading: "scss test"
+    color: $document-color
+
+
+# callout_scss: chapman.scss
+---
+
+::: callout-objective
+Generate customizable, reusable callouts in Quarto from metadata.
+:::
+
+## Dependencies
+
+Ideally, this filter would be able to use the already-existing [Iconify filter](https://github.com/mcanouil/quarto-iconify). I instead bundled the minified iconify here, like the filter does.
+
+## Usage
+
+```yaml
+custom_callouts:
+  - name: callout_name
+    icon: Iconify_identifier
+    attr:
+      # Any attributes for the iconify icon
+    collapse: true
+    heading: header_text
+    color: header_color
+    left-color: left_color
+    text-color: text_color
+  - name: ...
+    heading: ...
+    ...
+```
+
+`name` 
+: Name used to reference the callout in the markdown; e.g. if `name: example`, the callout is used with `::: callout-example`.
+
+`icon`
+: Iconify identifier for the icon to be used in the callout, i.e. `set:icon`. No icon will be displayed if not specified.
+
+`attr`
+: Any [attributes](https://iconify.design/docs/iconify-icon/#attributes) for the iconify icon, like `flip: vertical` or `rotate: 90`.
+
+`heading`
+: Text to be displayed in the header of the callout. 
+
+`collapse`
+: Whether the callout should be collapsible. If true, the callout will be collapsed by default.
+
+`color`
+: Color of the header of the callout. Can be a hex code or a named color. If `left-color` is not specified, the left border will be this color and the header will be the same color with 75% opacity (matching the default styles). Uses default color if not specified.
+
+`left-color`
+: Color of the left border of the callout.
+
+`text-color`
+: Color of the text in the callout. Uses default color if not specified.
+
+## Examples
+
+::: callout-hint
+This is a test of a hint callout.
+:::
+
+
+::: callout-video
+This is a test of a video callout.
+
+{{< video https://youtu.be/uRLM0nVYnZU?feature=shared >}}
+
+:::
+
+::: callout-defaults
+This is a test of a default callout.
+:::
+
+::: callout-test
+This is a test of a callout with custom scss. It should use `$document-color` (a magenta shade) as the color.
+:::
+
+## Todos
+
+- [ ] Allow colors defined in external .scss files
