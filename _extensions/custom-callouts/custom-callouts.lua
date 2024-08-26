@@ -117,7 +117,7 @@ function Meta(meta)
     custom_callouts = meta.custom_callouts
     callout_scss = meta.callout_scss
     doc_path = quarto.doc.input_file
-    if quarto.format.is_html_output() then
+    if quarto.doc.is_format("html*") then
       css = make_css(custom_callouts)
       
       -- sheets = {
@@ -166,11 +166,11 @@ function Meta(meta)
       io.open(path, "w"):write(css):close()
 
 
-      quarto.doc.add_html_dependency({
-        name = 'custom-callouts',
-        version = '0.0.0',
-        stylesheets = sheets
-      })
+      -- quarto.doc.add_html_dependency({
+      --   name = 'custom-callouts',
+      --   version = '0.0.0',
+      --   stylesheets = sheets
+      -- })
     end
   end
   return meta
@@ -248,7 +248,7 @@ function Div(el)
         })
 
         -- add Word styles
-        if quarto.format.is_docx_output() then
+        if quarto.doc.is_format('docx') then
           stylename = custom_suffix:gsub("^%l", string.upper)
           if callout.attributes == nil then
             callout.attributes = { ["custom-style"] = stylename }
@@ -268,16 +268,24 @@ local function tst(m)
   custom_scss = pandoc.Inlines(pandoc.Str("custom-callouts.scss"))
   if m.theme==nil then
     m.theme = custom_scss
-  -- else
-  --   m.theme:insert(pandoc.Str("custom-callouts.scss"))
+  else
+    m.theme:insert(pandoc.Str("custom-callouts.scss"))
   end
+
+  quarto.log.warning(sheets)
   
   for index, value in ipairs(sheets) do
-    -- quarto.log.warning(value)
-    m.theme:insert(pandoc.Str(value.name))
+    quarto.log.warning(value.path)
+    m.theme:insert(pandoc.Str(value.path))
   end
   
   quarto.log.warning(m.theme)
+
+  quarto.doc.add_html_dependency({
+    name = 'custom-callouts',
+    version = '0.0.0',
+    stylesheets = sheets
+  })
 
   return m
 end

@@ -3,8 +3,9 @@ title: "Custom-callouts Example"
 filters:
   - custom-callouts
 
-callout_scss: this-document.scss
+#callout_scss: this-document.scss
 # theme: this-document.scss
+theme: custom-callouts.scss
 
 custom_callouts:
   - name: objective
