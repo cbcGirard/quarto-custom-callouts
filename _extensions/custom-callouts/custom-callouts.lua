@@ -41,7 +41,7 @@ local function tryDirectory(filename, directory)
 
   parts = pandoc.path.split(directory)
   table.insert(parts, filename)
-  -- quarto.log.warning(parts)
+  -- quarto.log.debug(parts)
 
   local path = pandoc.path.join(parts)
   if fileExists(path) then
@@ -108,7 +108,7 @@ local function make_css(callouts)
     end
   end
   -- css = css .. "</style>"
-  -- quarto.log.warning(css)
+  -- quarto.log.debug(css)
   return css
 end
 
@@ -132,7 +132,7 @@ function Meta(meta)
         for i, sheet in ipairs(callout_scss) do
           sheetname = pandoc.utils.stringify(sheet)
           dep_path = find_local_dep(sheetname)
-          -- quarto.log.warning(dep_path)
+          -- quarto.log.debug(dep_path)
 
 
           -- add to theme
@@ -144,7 +144,7 @@ function Meta(meta)
 
           -- copy to extension directory
           -- dep_contents = io.open(dep_path, "r"):read("*a")
-          -- -- quarto.log.warning(dep_contents)
+          -- -- quarto.log.debug(dep_contents)
           -- -- dest_path = quarto.utils.resolve_path(sheetname)
           -- dest_path = dep_path
           -- io.open(dest_path, "w"):write(dep_contents):close()
@@ -195,18 +195,18 @@ local function ensure_html_deps()
 end
 
 function Div(el)
-  -- quarto.log.warning(el.classes)
+  -- quarto.log.debug(el.classes)
   if custom_callouts ~= nil then
     for i, custom in ipairs(custom_callouts) do
       custom_suffix = pandoc.utils.stringify(custom.name)
       custom_class = "callout-" .. custom_suffix
-      -- quarto.log.warning(custom_class)
-      -- quarto.log.warning(el.classes)
+      -- quarto.log.debug(custom_class)
+      -- quarto.log.debug(el.classes)
       if (el.classes:includes(custom_class)) then
         if custom.heading then
-          custom_title = custom.heading
+          custom_title = custom.heading:walk{}
         else
-          custom_title = custom.name
+          custom_title = custom.name:walk{}
         end
 
         if custom.icon ~= nil then
@@ -214,10 +214,10 @@ function Div(el)
           attr = ""
           if custom.attr ~= nil then
             for key, value in pairs(custom.attr) do
-              -- quarto.log.warning(key)
-              -- quarto.log.warning(value)
+              -- quarto.log.debug(key)
+              -- quarto.log.debug(value)
               attr = attr .. " " .. key .. "='" .. pandoc.utils.stringify(value) .. "'"
-              -- quarto.log.warning(attr)
+              -- quarto.log.debug(attr)
             end
           end
 
@@ -236,8 +236,8 @@ function Div(el)
           collapse = nil
         end
 
-        -- quarto.log.warning(ico)
-        -- quarto.log.warning(custom_title)
+        -- quarto.log.debug(ico)
+        -- quarto.log.debug(custom_title)
         callout = quarto.Callout({
           content = { el },
           -- title=pandoc.Inlines(ico, custom_title),
@@ -256,7 +256,7 @@ function Div(el)
             callout.attributes["custom-style"] = stylename
           end
         end
-        -- quarto.log.warning(callout)
+        -- quarto.log.debug(callout)
         return callout
       end
     end
@@ -268,18 +268,20 @@ local function tst(m)
   custom_scss = pandoc.Inlines(pandoc.Str("custom-callouts.scss"))
   if m.theme==nil then
     m.theme = custom_scss
-  else
-    m.theme:insert(pandoc.Str("custom-callouts.scss"))
+  -- else
+  --   m.theme:insert(pandoc.Str("custom-callouts.scss"))
   end
 
-  quarto.log.warning(sheets)
+  quarto.log.debug(sheets)
   
   for index, value in ipairs(sheets) do
-    quarto.log.warning(value.path)
-    m.theme:insert(pandoc.Str(value.path))
+    -- quarto.log.debug(value.path)
+    if value.path~="custom-callouts.scss" then
+      m.theme:insert(pandoc.Str(value.path))
+    end
   end
   
-  quarto.log.warning(m.theme)
+  quarto.log.debug(m.theme)
 
   quarto.doc.add_html_dependency({
     name = 'custom-callouts',
