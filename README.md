@@ -1,13 +1,11 @@
 # Custom-callouts Extension For Quarto
 
-_TODO_: Add a short description of your extension.
+Add custom callouts to your Quarto documents.
 
 ## Installing
 
-_TODO_: Replace the `<github-organization>` with your GitHub organization.
-
 ```bash
-quarto add <github-organization>/custom-callouts
+quarto add cbcGirard/quarto-custom-callouts
 ```
 
 This will install the extension under the `_extensions` subdirectory.
@@ -15,9 +13,11 @@ If you're using version control, you will want to check in this directory.
 
 ## Using
 
-_TODO_: Describe how to use your extension.
+Add to your document metadata:
 
-## Example
+```yaml
+filters:
+  - custom-callouts
+```
 
-Here is the source code for a minimal example: [example.qmd](example.qmd).
-
+See the [example](example.qmd) for details on defining callouts in the metadata and using them in the document.

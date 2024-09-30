@@ -2,14 +2,7 @@ local custom_callouts = nil
 local callout_scss = nil
 
 --- scss stylesheets
-local sheets = {
-  {
-    path = "custom-callouts.scss",
-    -- attribs = {
-    --   type = "text/css",
-    -- }
-  },
-}
+local sheets = {}
 
 
 --- Returns true if a file exists, false otherwise.
@@ -31,6 +24,15 @@ local function drop_file_from_path(path)
   local parts = pandoc.path.split(path)
   table.remove(parts)
   return pandoc.path.join(parts)
+end
+
+--- Get name of file, without extension or path.
+--- @param path string
+--- @return string
+local function get_filename(path)
+  local parts = pandoc.path.split(path)
+  local filename = parts[#parts]
+  return filename:match("(.+)%..+")
 end
 
 --- Returns full path to a file if it exists in a directory; nil otherwise.
@@ -79,6 +81,7 @@ local function make_css(callouts)
   -- css = "<style>\n"
   css = "/*-- scss:rules --*/\n"
   for i, my_callout in ipairs(callouts) do
+    -- heading and border SCSS rules
     header_css = "div.callout.callout-style-default.callout-" ..
     pandoc.utils.stringify(my_callout.name) .. ">.callout-header {\n"
 
@@ -91,7 +94,6 @@ local function make_css(callouts)
         header_color = color
       else
         left_color = color
-        -- header_color = "rgba(" .. color .. ", 75%)"
         header_color = "color-mix(in srgb, " .. color .. ", transparent 75%)"
       end
 
@@ -107,70 +109,74 @@ local function make_css(callouts)
       css = css .. callout_css .. "border-left-color: " .. left_color .. ";}\n"
     end
   end
-  -- css = css .. "</style>"
-  -- quarto.log.debug(css)
   return css
 end
 
 function Meta(meta)
   if meta.custom_callouts ~= nil then
+    quarto.log.info("Found custom callouts")
     custom_callouts = meta.custom_callouts
     callout_scss = meta.callout_scss
     doc_path = quarto.doc.input_file
-    if quarto.doc.is_format("html*") then
+
+    if quarto.doc.is_format("html:js") then
       css = make_css(custom_callouts)
+      quarto.log.info("base css:\n" .. css)
       
-      -- sheets = {
-      --   {
-      --     path = "custom-callouts.scss",
-      --     attribs = {
-      --       type = "text/css",
-      --     }
-      --   },
-      -- }
+      if meta.theme ~= nil then
+        theme = pandoc.utils.stringify(meta.theme)
+        if theme:sub(-5) ~= ".scss" then
+          theme = theme .. ".scss"
+        end
+        dep_path = find_local_dep(theme)
+
+        -- add to dependencies
+        table.insert(sheets, {
+          path = dep_path,
+          attribs = {
+            type = "text/css",
+          }
+        })
+        css = "@import './" .. theme .. "';\n\n" .. css
+      end
+
       if callout_scss ~= nil then
         for i, sheet in ipairs(callout_scss) do
           sheetname = pandoc.utils.stringify(sheet)
           dep_path = find_local_dep(sheetname)
-          -- quarto.log.debug(dep_path)
-
-
-          -- add to theme
-          -- if meta.theme~=nil then
-          --   meta.theme:insert(sheet)
-          -- else
-          --   meta.theme = sheet
-          -- end
-
-          -- copy to extension directory
-          -- dep_contents = io.open(dep_path, "r"):read("*a")
-          -- -- quarto.log.debug(dep_contents)
-          -- -- dest_path = quarto.utils.resolve_path(sheetname)
-          -- dest_path = dep_path
-          -- io.open(dest_path, "w"):write(dep_contents):close()
 
           -- add to dependencies
           table.insert(sheets, {
-            -- path = pandoc.utils.stringify(sheet),
             path = dep_path,
-            -- attribs = {
-            --   type = "text/css",
-            -- }
+            attribs = {
+              type = "text/css",
+            }
           })
           css = "@import './" .. sheetname .. "';\n\n" .. css
         end
-
       end
 
-      path = quarto.utils.resolve_path("custom-callouts.scss")
+      outname = get_filename(doc_path) .. "-callouts.scss"
+      path = quarto.utils.resolve_path(outname)
+
+      quarto.log.info("Writing custom callouts to " .. path)
       io.open(path, "w"):write(css):close()
 
+      table.insert(sheets, {
+        path = path,
+        attribs = {
+          type = "text/css",
+        }
+      })
 
-      -- quarto.doc.add_html_dependency({
-      --   name = 'custom-callouts',
-      --   version = '0.0.0',
-      --   stylesheets = sheets
-      -- })
+      quarto.log.info("Adding custom callouts to dependencies")
+      quarto.log.info(sheets)
+
+      quarto.doc.add_html_dependency({
+        name = outname,
+        version = '0.0.0',
+        stylesheets = sheets
+      })
     end
   end
   return meta
@@ -185,7 +191,6 @@ local function ensure_html_deps()
     scripts = {
       {
         path = "iconify-icon.min.js",
-        -- path= "https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js",
         attribs = {
           type = "module",
         }
@@ -195,13 +200,10 @@ local function ensure_html_deps()
 end
 
 function Div(el)
-  -- quarto.log.debug(el.classes)
   if custom_callouts ~= nil then
     for i, custom in ipairs(custom_callouts) do
       custom_suffix = pandoc.utils.stringify(custom.name)
       custom_class = "callout-" .. custom_suffix
-      -- quarto.log.debug(custom_class)
-      -- quarto.log.debug(el.classes)
       if (el.classes:includes(custom_class)) then
         if custom.heading then
           custom_title = custom.heading:walk{}
@@ -210,14 +212,10 @@ function Div(el)
         end
 
         if custom.icon ~= nil then
-          -- handle additional attributes (flip, rotate, etc.)
           attr = ""
           if custom.attr ~= nil then
             for key, value in pairs(custom.attr) do
-              -- quarto.log.debug(key)
-              -- quarto.log.debug(value)
               attr = attr .. " " .. key .. "='" .. pandoc.utils.stringify(value) .. "'"
-              -- quarto.log.debug(attr)
             end
           end
 
@@ -225,6 +223,7 @@ function Div(el)
             pandoc.utils.stringify(custom.icon) .. "'" .. attr .. "></iconify-icon>&nbsp;")
 
           custom_title:insert(1, ico)
+          quarto.log.info(custom_title)
         else
           ico = pandoc.RawInline("html", "")
         end
@@ -236,15 +235,12 @@ function Div(el)
           collapse = nil
         end
 
-        -- quarto.log.debug(ico)
-        -- quarto.log.debug(custom_title)
         callout = quarto.Callout({
           content = { el },
-          -- title=pandoc.Inlines(ico, custom_title),
           title = custom_title,
           type = custom_suffix,
           collapse = collapse,
-          icon = false
+          icon = ""
         })
 
         -- add Word styles
@@ -256,7 +252,6 @@ function Div(el)
             callout.attributes["custom-style"] = stylename
           end
         end
-        -- quarto.log.debug(callout)
         return callout
       end
     end
@@ -264,37 +259,9 @@ function Div(el)
 
 end
 
-local function tst(m)
-  custom_scss = pandoc.Inlines(pandoc.Str("custom-callouts.scss"))
-  if m.theme==nil then
-    m.theme = custom_scss
-  -- else
-  --   m.theme:insert(pandoc.Str("custom-callouts.scss"))
-  end
-
-  quarto.log.debug(sheets)
-  
-  for index, value in ipairs(sheets) do
-    -- quarto.log.debug(value.path)
-    if value.path~="custom-callouts.scss" then
-      m.theme:insert(pandoc.Str(value.path))
-    end
-  end
-  
-  quarto.log.debug(m.theme)
-
-  quarto.doc.add_html_dependency({
-    name = 'custom-callouts',
-    version = '0.0.0',
-    stylesheets = sheets
-  })
-
-  return m
-end
 
 return {
   { ensure_html_deps() },
   { Meta = Meta },
   { Div = Div },
-  {Meta=tst}
 }

@@ -1,6 +1,6 @@
 title: Custom-callouts
 author: CBC Girard
-version: 1.0.0
+version: 1.0.1
 quarto-required: ">=1.4.0"
 contributes:
   filters:

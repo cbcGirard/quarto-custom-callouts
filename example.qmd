@@ -3,9 +3,7 @@ title: "Custom-callouts Example"
 filters:
   - custom-callouts
 
-#callout_scss: this-document.scss
-# theme: this-document.scss
-theme: custom-callouts.scss
+theme: this-document.scss
 
 custom_callouts:
   - name: objective
@@ -20,7 +18,7 @@ custom_callouts:
     attr:
       flip: vertical
     collapse: true
-    left_color: '#afcfff'
+    left_color: '#19232d'
     color: "gray"
   - name: video
     icon: mdi:video-vintage
@@ -32,9 +30,6 @@ custom_callouts:
   - name: test
     heading: "scss test"
     color: $document-color
-
-
-# callout_scss: chapman.scss
 ---
 
 ::: callout-objective
@@ -106,9 +101,17 @@ This is a test of a default callout.
 :::
 
 ::: callout-test
-This is a test of a callout with custom scss. It should use `$document-color` (a magenta shade) as the color.
+This is a test of a callout with custom scss. It should use `$document-color` (a magenta shade) as the color, [like this]{.doc-color-demo}.
+:::
+
+::: callout-objective
+Early versions had issues with inserting additional icons for subsequent appearances of the same callout. This has been fixed.
 :::
 
 ## Todos
 
+- [ ] Verify best-practice for dynamically generating and including resources
+
 - [ ] Allow colors defined in external .scss files
+
+- [ ] Add export to MS Word
